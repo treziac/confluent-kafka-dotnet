@@ -186,7 +186,7 @@ namespace Confluent.Kafka
 
             public void HandleDeliveryReport(Message message)
             {
-                SetResult(message);
+                System.Threading.Tasks.Task.Run(() => SetResult(message));
             }
         }
 
@@ -829,7 +829,7 @@ namespace Confluent.Kafka
                     message.Error
                 );
 
-                SetResult(mi);
+                System.Threading.Tasks.Task.Run(() => SetResult(mi));
             }
         }
 
