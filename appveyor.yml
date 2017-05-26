@@ -17,7 +17,7 @@ build_script:
 
 test_script:
  - dotnet test -c %CONFIGURATION% --no-build test/Confluent.Kafka.UnitTests/Confluent.Kafka.UnitTests.csproj
- - dotnet test -c %CONFIGURATION% --no-build test/Confluent.Kafka.UnitTests/Confluent.Kafka.InterationTests.csproj
+ - dotnet test -c %CONFIGURATION% --no-build test/Confluent.Kafka.InterationTests/Confluent.Kafka.InterationTests.csproj
 
 artifacts:
   - path: ./src/Confluent.Kafka/bin/Release/*.nupkg
