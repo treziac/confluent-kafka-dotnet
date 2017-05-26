@@ -30,10 +30,8 @@ namespace Confluent.Kafka.IntegrationTests
         {
             if (kafkaParameters == null)
             {
-                var codeBase = typeof(Tests).GetTypeInfo().Assembly.CodeBase;
-                // TODO: Better way to turn Uri into path?
-                var assemblyPath = codeBase.Substring("file://".Length);
-                var assemblyDirectory = Path.GetDirectoryName(assemblyPath);
+                var codeBase = typeof(Tests).GetTypeInfo().Assembly.Location;
+                var assemblyDirectory = Path.GetDirectoryName(codeBase);
                 var jsonPath = Path.Combine(assemblyDirectory, "kafka.parameters.json");
                 dynamic json = JsonConvert.DeserializeObject(File.ReadAllText(jsonPath));
                 kafkaParameters = new List<object[]>() { new object[] { json.bootstrapServers.ToString(), json.topic.ToString(), json.partitionedTopic.ToString() } };
