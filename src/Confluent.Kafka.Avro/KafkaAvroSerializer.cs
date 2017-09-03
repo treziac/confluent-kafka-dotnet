@@ -25,7 +25,7 @@
 //        //topic refer to kafka topic
 //        //subject refers to schema registry subject. Usually topi postfixed by -key or -data
 
-//        public const byte MAGIC_BYTE = 0;
+//        private const byte MAGIC_BYTE = 0;
 
 //        private bool isKey;
 //        private readonly SpecificWriter<T> _avroSerializer;
@@ -52,15 +52,15 @@
 //            }
 
 //            Avro.Schema schema;
-//            if(typeof(T).Equals(typeof(int)))
+//            if (typeof(T).Equals(typeof(int)))
 //            {
 //                schema = Avro.Schema.Parse(Avro.Schema.GetTypeString(Avro.Schema.Type.Int));
 //            }
-//            else if(typeof(T).Equals(typeof(bool)))
+//            else if (typeof(T).Equals(typeof(bool)))
 //            {
 //                schema = Avro.Schema.Parse(Avro.Schema.GetTypeString(Avro.Schema.Type.Boolean));
 //            }
-//            else if(typeof(T).IsInstanceOfType(typeof(ISpecificRecord)))
+//            else if (typeof(T).IsInstanceOfType(typeof(ISpecificRecord)))
 //            {
 //                schema = null;
 //                //retrive the static schema
@@ -164,7 +164,7 @@
 //            //avro message
 //            _avroSerializer.Write(data, new BinaryEncoder(stream));
 //        }
-        
+
 //        /// <summary>
 //        /// Deserialize array to given type
 //        /// </summary>

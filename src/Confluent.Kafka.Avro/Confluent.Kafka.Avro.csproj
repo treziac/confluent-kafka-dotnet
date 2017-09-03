@@ -4,6 +4,10 @@
     <TargetFramework>net45</TargetFramework>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DocumentationFile>bin\Debug\net45\Confluent.Kafka.Avro.xml</DocumentationFile>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Apache.Avro" Version="1.7.7.2" />
   </ItemGroup>

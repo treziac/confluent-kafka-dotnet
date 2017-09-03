@@ -44,8 +44,16 @@ namespace Confluent.Kafka.Serialization
         public bool IsKey { get; }
         public ISchemaRegistryClient SchemaRegistryClient { get; }
 
+        // Length to intialize the buffer to write data.
+        // This can be optimize given the type of data, or last length used
+        // 30 is arbitrary
+        /// <summary>
+        /// Test
+        /// </summary>
+        private int bufferInitialLength = 30;
+
         // Deserializers against different versions of the schema (older or newer)
-        private readonly Dictionary<int, DatumReader<object>> _avroDeserializerBySchemaId = new Dictionary<int, DatumReader<object>>();
+        private readonly Dictionary<int, DatumWriter<object>> avroSerializerBySchemaId = new Dictionary<int, DatumWriter<object>>();
 
 
         /// <summary>
@@ -82,12 +90,14 @@ namespace Confluent.Kafka.Serialization
                 return FromType(Avro.Schema.Type.Bytes);
             if (data is ISpecificRecord specificRecord)
                 return specificRecord.Schema;
+            if (data is SpecificFixed specificFixed)
+                return specificFixed.Schema;
             if (data is GenericRecord genericRecord)
                 return genericRecord.Schema;
             
             throw new ArgumentException(
                     "Unsupported Avro type. Supported types are null, Boolean, Integer, Long, "
-                    + "Float, Double, String, byte[], SpecificRecord and GenericRecord");
+                    + "Float, Double, String, byte[], SpecificRecord, speficifFixed and GenericRecord");
         }
 
     
@@ -105,7 +115,8 @@ namespace Confluent.Kafka.Serialization
             string subject = SchemaRegistryClient.GetRegistrySubject(topic, IsKey);
             // TODO check to use something else than 30 which is not optimal.
             // For primitive type, we can "easily" generate an exact value
-            using (var stream = new MemoryStream(30))
+            // for other type, perhaps cache the last value used?
+            using (var stream = new MemoryStream(bufferInitialLength))
             {
                 int schemaId;
                 Avro.Schema schema = GetSchema(data);
@@ -115,7 +126,7 @@ namespace Confluent.Kafka.Serialization
                 stream.WriteByte(MAGIC_BYTE);
 
                 // 4 bytes: schema global unique id
-                // use network order to b compatible with other implementation
+                // use network order (big endian)
                 byte[] idBytes = BitConverter.GetBytes(IPAddress.HostToNetworkOrder(schemaId));
                 stream.Write(idBytes, 0, 4);
 
@@ -123,25 +134,35 @@ namespace Confluent.Kafka.Serialization
                 {
                     stream.Write(bytes, 0, bytes.Length);
                 }
-                else if (data is ISpecificRecord)
+                if(!avroSerializerBySchemaId.TryGetValue(schemaId, out DatumWriter<object> writer))
                 {
-                    var writer = new SpecificDefaultWriter(schema);
-                    writer.Write(schema, data, new BinaryEncoder(stream));
+                    if(data is ISpecificRecord || data is SpecificFixed)
+                    {
+                        writer = new SpecificWriter<object>(schema);
+                    }
+                    else
+                    {
+                        writer = new GenericWriter<object>(schema);
+                    }
+                    avroSerializerBySchemaId[schemaId] = writer;
                 }
-                else
-                {
-                    var writer = new GenericWriter<object>(schema);
-                    writer.Write(data, new BinaryEncoder(stream));
-                }
+                writer.Write(data, new BinaryEncoder(stream));
+
+
+                // We take current length + 10% for the next allocated array
+                // This is king of arbitraty, but in most case where data are kind of alike between two produce,
+                // This allow to avoid to resize memorystream buffer
+                bufferInitialLength = (int)(stream.Length * 1.2);
 
                 // TODO
                 // stream.ToArray copy the memory stream to a new Array
                 // we may rather want to use GetBuffer (or arraySegment in netstandard)
-                // but we need array segment in serializer in this case
+                // but we need to return array segment in ISerializer in this case (or byte, offset and length)
                 return stream.ToArray();
             }
         }
         
+        // TODO : make avroSerializer configurable
         public IEnumerable<KeyValuePair<string, object>> Configure(IEnumerable<KeyValuePair<string, object>> config, bool isKey)
         {
             return config;
